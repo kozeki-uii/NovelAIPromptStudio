@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=NovelAI Prompt Studio
+Comment=Organize NovelAI images and prompts
+Comment[zh_CN]=整理 NovelAI 图片和提示词
+Exec=novelai-prompt-studio
+Icon=studio.novelai.prompt
+Terminal=false
+Categories=Graphics;
+StartupWMClass=studio.novelai.prompt

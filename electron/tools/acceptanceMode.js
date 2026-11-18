@@ -55,7 +55,7 @@ export function configureAcceptanceMode(app, argv = process.argv) {
   app.disableHardwareAcceleration();
   // Restricted Windows hosts cannot launch Chromium's sandboxed child processes.
   // This opt-in is reached only after validating the disposable acceptance profile.
-  app.commandLine.appendSwitch('no-sandbox');
+  if (process.platform !== 'linux') app.commandLine.appendSwitch('no-sandbox');
   app.commandLine.appendSwitch('force-device-scale-factor', '1');
   // Process-local platform preference: survives reload and CDP override cleanup.
   if (config.reducedMotion) app.commandLine.appendSwitch('force-prefers-reduced-motion');

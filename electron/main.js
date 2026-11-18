@@ -92,6 +92,7 @@ const macAutomaticUpdates =
     .macSignedAndNotarized === true;
 
 app.setName('NovelAI Prompt Studio');
+if (process.platform === 'linux' && app.isPackaged) app.setDesktopName('studio.novelai.prompt');
 const acceptanceMode = configureAcceptanceMode(app);
 if (acceptanceMode?.fullLibraryBenchmark) {
   const { startBenchmarkProfile } = await import('./tools/benchmarkProfile.js');

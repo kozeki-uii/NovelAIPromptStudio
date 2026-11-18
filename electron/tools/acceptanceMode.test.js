@@ -114,7 +114,9 @@ it.each([false, true])(
         commandLine: { appendSwitch: vi.fn() },
       };
       const mode = configureAcceptanceMode(app, ['--verify-app=' + root]);
-      expect(app.commandLine.appendSwitch).toHaveBeenCalledWith('no-sandbox');
+      expect(app.commandLine.appendSwitch.mock.calls.some(([name]) => name === 'no-sandbox')).toBe(
+        process.platform !== 'linux',
+      );
       expect(
         app.commandLine.appendSwitch.mock.calls.some(
           ([name]) => name === 'force-prefers-reduced-motion',

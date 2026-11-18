@@ -149,6 +149,17 @@ NovelAI 的公开接口文档写明第三方工具可以向用户索取持久令
 
 2.0 把分支做成了主角：版本栏能看大图和分支小图，分支总览把所有分支铺在一张画布上。遇到问题或者想要什么功能，欢迎在 [Issues](https://github.com/LBEILC/NovelAIPromptStudio/issues) 里说。
 
+## Arch Linux / CachyOS
+
+在 x86_64 上，安装 `base-devel`，准备 Node.js 22 或 24（至少 22.12）与 npm，然后在本仓库根目录构建：
+
+```bash
+makepkg
+sudo pacman -U "$(makepkg --packagelist)"
+```
+
+安装后可从桌面应用菜单打开 NovelAI Prompt Studio，也可运行 `novelai-prompt-studio`。升级时重新构建并用 `pacman -U` 安装新包。
+
 ## 参与开发
 
 需要 [Node.js 22 或 24](https://nodejs.org/) 及 npm。
