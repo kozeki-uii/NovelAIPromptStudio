@@ -3,6 +3,8 @@ import { createLibraryExport } from './libraryExport.js';
 import { createFolderImporter } from './folderImport.js';
 import { deleteLibraryImages } from './deleteLibraryImages.js';
 import { createTray } from './tray.js';
+import { hasLinuxTrayHost, createLinuxTray } from './linuxTray.js';
+import { systemSecretStore } from './systemSecretStore.js';
 import { installWindowClose, confirmUnsavedClose, createQuitHandler } from './windowClose.js';
 import { isTrayContents, sendWindowEvent } from './windowAccess.js';
 import { CommandError } from './commands/registry.js';
@@ -93,6 +95,17 @@ const macAutomaticUpdates =
 
 app.setName('NovelAI Prompt Studio');
 if (process.platform === 'linux' && app.isPackaged) app.setDesktopName('studio.novelai.prompt');
+if (
+  process.platform === 'linux' &&
+  process.env.APPIMAGE &&
+  app.commandLine.hasSwitch('no-sandbox')
+) {
+  dialog.showErrorBox(
+    '无法安全启动 NovelAI Prompt Studio',
+    '当前系统无法为 AppImage 启用 Chromium 沙箱。请使用此发行版的原生安装包。',
+  );
+  app.exit(1);
+}
 const acceptanceMode = configureAcceptanceMode(app);
 if (acceptanceMode?.fullLibraryBenchmark) {
   const { startBenchmarkProfile } = await import('./tools/benchmarkProfile.js');
@@ -147,6 +160,7 @@ let quitRequested = false;
 let sessionEnding = false;
 let trayController;
 const windowClosers = new WeakMap();
+const trayAvailable = () => !!trayController && !trayController.tray.isDestroyed();
 function mainWindows() {
   return BrowserWindow.getAllWindows().filter((w) => !isTrayContents(w.webContents));
 }
@@ -325,6 +339,7 @@ function createWindow(captureState = null) {
       window,
       installWindowClose(window, {
         platform: process.platform,
+        trayAvailable,
         preferences,
         isQuitting: () => quitRequested || quitPrepared,
         prepare: (window) => commandRuntime.prepareWindow(window),
@@ -453,7 +468,7 @@ app.whenReady().then(async () => {
     console.warn('Unable to enumerate system fonts; preserving font preferences:', error.message);
     return undefined;
   });
-  preferences = openPreferences(dataDirectory, safeStorage, {
+  preferences = openPreferences(dataDirectory, systemSecretStore(safeStorage), {
     defaultAssetsDirectory,
     systemFonts,
   });
@@ -1311,18 +1326,17 @@ app.whenReady().then(async () => {
     const settings = input.settings;
     const saved = preferences.saveAppearanceSettings(settings);
     for (const window of mainWindows()) void syncTitleBarOverlay(window);
-    trayController?.reload();
+    trayController?.reload?.();
     return saved;
   });
   nativeTheme.on('updated', () => {
     for (const window of mainWindows()) void syncTitleBarOverlay(window);
-    trayController?.reload();
+    trayController?.reload?.();
   });
   registerCommand('window.close-choice', async (input, caller) => {
     const window = BrowserWindow.fromWebContents(caller.sender);
     const closer = window && windowClosers.get(window);
-    if (!closer || process.platform !== 'win32')
-      throw new CommandError('forbidden', '此窗口不支持关闭选择');
+    if (!closer || !trayAvailable()) throw new CommandError('forbidden', '此窗口不支持关闭选择');
     await closer.choose(input.action, input.remember);
     return {};
   });
@@ -1337,7 +1351,7 @@ app.whenReady().then(async () => {
     });
   }
   registerCommand('settings.productivity.get', (input, _caller) => {
-    return preferences.productivitySettings();
+    return { ...preferences.productivitySettings(), trayAvailable: trayAvailable() };
   });
   registerCommand('settings.productivity.save', (input, _event) => {
     const settings = input.settings;
@@ -1767,8 +1781,8 @@ app.whenReady().then(async () => {
   );
   registerCommand('backup.undo', () => backupResult(() => backupManager.undo()));
 
-  if (process.platform === 'win32' && !screenshotMode) {
-    trayController = createTray({
+  if (!screenshotMode) {
+    const trayOptions = {
       app,
       shell,
       showMain: showMainWindow,
@@ -1778,7 +1792,10 @@ app.whenReady().then(async () => {
       developmentUrl:
         process.env.NOVELAI_DEV_URL ||
         (process.argv.includes('--dev') ? 'http://127.0.0.1:5173' : ''),
-    });
+    };
+    if (process.platform === 'win32') trayController = createTray(trayOptions);
+    else if (process.platform === 'linux' && (await hasLinuxTrayHost()))
+      trayController = createLinuxTray(trayOptions);
   }
   if (acceptanceMode) {
     try {

@@ -2,8 +2,12 @@ import fs from 'node:fs';
 import { safeStorage } from 'electron';
 import { commandFor } from './release186.js';
 
-export async function secretStoreChecks({ h, preferences, generationService }) {
+export async function secretStoreChecks({ h, preferences, generationService, encrypted }) {
   h.category('密钥存储');
+  if (process.platform === 'linux' && !encrypted) {
+    h.uncovered('持久密钥访问验证', 'Linux 系统密钥库未启用或未解锁');
+    return;
+  }
   const call = commandFor(h);
   const original = fs.readFileSync(preferences.filePath, 'utf8');
   const decrypt = safeStorage.decryptString;

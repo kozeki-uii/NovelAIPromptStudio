@@ -12,15 +12,16 @@ import { BlurRows } from './blurSection';
 export function Appearance() {
   const notify = useNotifications();
   const { appearance, changeAppearance } = useAppearance();
-  // 关闭主窗口时（2.28）：只在 Windows；macOS 照系统习惯，关窗口后程序留在 Dock
-  const windows = document.documentElement.dataset.platform === 'windows';
+  const [trayAvailable, setTrayAvailable] = useState(false);
   const [closeAction, setCloseAction] = useState<ProductivitySettings['closeAction']>('ask');
   useEffect(() => {
-    if (!windows) return;
     invokeUI('settings.productivity.get', {})
-      .then((s) => setCloseAction(s.closeAction || 'ask'))
+      .then((s) => {
+        setTrayAvailable(s.trayAvailable);
+        setCloseAction(s.closeAction);
+      })
       .catch(() => {});
-  }, [windows]);
+  }, []);
   const saveClose = (value: ProductivitySettings['closeAction']) => {
     setCloseAction(value);
     invokeUI('settings.productivity.save', { settings: { closeAction: value } })
@@ -118,7 +119,7 @@ export function Appearance() {
         />
       </Row>
       <BlurRows />
-      {windows && (
+      {trayAvailable && (
         <Row title="关闭主窗口时" help="最小化到托盘后，生成和 Agent 接入在后台继续">
           <Seg
             label="关闭主窗口时"

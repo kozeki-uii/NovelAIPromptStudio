@@ -149,7 +149,11 @@ NovelAI 的公开接口文档写明第三方工具可以向用户索取持久令
 
 2.0 把分支做成了主角：版本栏能看大图和分支小图，分支总览把所有分支铺在一张画布上。遇到问题或者想要什么功能，欢迎在 [Issues](https://github.com/LBEILC/NovelAIPromptStudio/issues) 里说。
 
-## Arch Linux / CachyOS
+## Linux x86_64
+
+支持系统托盘的桌面可通过托盘重新打开或退出软件。KDE Plasma 可使用 KWallet，GNOME 可使用系统的 Secret Service 保存密钥。系统密钥库不可用时，软件不会把新密钥持久写入磁盘。
+
+### Arch Linux / CachyOS
 
 在 x86_64 上，安装 `base-devel`，准备 Node.js 22 或 24（至少 22.12）与 npm，然后在本仓库根目录构建：
 
@@ -159,6 +163,16 @@ sudo pacman -U "$(makepkg --packagelist)"
 ```
 
 安装后可从桌面应用菜单打开 NovelAI Prompt Studio，也可运行 `novelai-prompt-studio`。升级时重新构建并用 `pacman -U` 安装新包。
+
+### AppImage / Ubuntu
+
+在 Linux 上准备 Node.js 和 npm，按下方说明安装依赖并下载字体。若在 Arch 上构建 `.deb`，需安装 `libxcrypt-compat` 供打包工具使用。然后运行：
+
+```bash
+npm run package -- --linux AppImage deb --x64
+```
+
+产物位于 `release/`。AppImage 设置为可执行后可直接运行，需要系统支持 Chromium 使用的用户命名空间。Ubuntu 桌面可用 `sudo apt install ./文件名.deb` 安装。
 
 ## 参与开发
 

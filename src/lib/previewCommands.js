@@ -38,7 +38,12 @@ const handlers = {
     }))(),
   'settings.appearance.save': (input) => (async (settings) => settings)(input.settings),
   'settings.productivity.get': (input) =>
-    (async () => ({ recentImageDirectory: '', autoCheckUpdates: true, closeAction: 'ask' }))(),
+    (async () => ({
+      recentImageDirectory: '',
+      autoCheckUpdates: true,
+      closeAction: 'ask',
+      trayAvailable: document.documentElement.dataset.platform === 'windows',
+    }))(),
   'settings.productivity.save': (input) => (async (settings) => settings)(input.settings),
   'updates.status': (input) =>
     (async () => ({

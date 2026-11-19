@@ -803,7 +803,7 @@ export interface CommandDefinitions {
   };
   'settings.productivity.get': {
     input: Record<string, never>;
-    output: Types.ProductivitySettings;
+    output: Types.ProductivitySettings & { trayAvailable: boolean };
   };
   'settings.productivity.save': {
     input: { settings: Partial<Types.ProductivitySettings> };

@@ -62,7 +62,7 @@ export function installWindowClose(window, options) {
   window.on('close', (event) => {
     if (prepared || options.isQuitting()) return;
     event.preventDefault();
-    if (options.platform === 'win32') {
+    if (options.trayAvailable()) {
       const action = options.preferences.productivitySettings().closeAction;
       if (action === 'ask') options.request(window);
       else void choose(action).catch(options.error);

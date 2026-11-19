@@ -1,7 +1,7 @@
 import { EventEmitter } from 'node:events';
 import { describe, it, expect, vi } from 'vitest';
 import { installWindowClose, createQuitHandler, confirmUnsavedClose } from './windowClose.js';
-function setup(platform = 'win32', action = 'ask') {
+function setup(platform = 'win32', action = 'ask', trayAvailable = platform === 'win32') {
   const window = Object.assign(new EventEmitter(), {
     hide: vi.fn(),
     show: vi.fn(),
@@ -11,6 +11,7 @@ function setup(platform = 'win32', action = 'ask') {
   });
   const options = {
     platform,
+    trayAvailable: () => trayAvailable,
     preferences: {
       productivitySettings: () => ({ closeAction: action }),
       saveProductivitySettings: vi.fn(),
@@ -91,6 +92,13 @@ describe('window close lifecycle', () => {
     await vi.waitFor(() => expect(window.close).toHaveBeenCalledOnce());
     expect(options.prepare).toHaveBeenCalledOnce();
     expect(options.request).not.toHaveBeenCalled();
+  });
+  it('hides on Linux only when a desktop tray is available', async () => {
+    const { window, options, event } = setup('linux', 'tray', true);
+    window.emit('close', event);
+    await vi.waitFor(() => expect(window.hide).toHaveBeenCalledOnce());
+    expect(options.prepare).toHaveBeenCalledOnce();
+    expect(window.close).not.toHaveBeenCalled();
   });
 });
 

@@ -1,6 +1,6 @@
 pkgname=novelai-prompt-studio
 pkgver=2.0.8
-pkgrel=1
+pkgrel=2
 pkgdesc='Desktop workspace for NovelAI images and prompts'
 arch=('x86_64')
 url='https://github.com/kozeki-uii/NovelAIPromptStudio'

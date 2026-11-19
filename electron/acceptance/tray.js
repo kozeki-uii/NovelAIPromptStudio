@@ -1,7 +1,16 @@
 export async function trayChecks({ h, app, preferences, trayController }) {
-  if (process.platform !== 'win32') return;
+  if (process.platform !== 'win32' && process.platform !== 'linux') return;
   h.category('外壳·托盘');
   h.dualThemes(false);
+  if (!trayController && process.platform === 'linux') {
+    await h.check(
+      '桌面没有托盘宿主时不提供隐藏到托盘的选项',
+      'window.studio.invoke("settings.productivity.get",{}).then(r => r.ok && !r.data.trayAvailable)',
+      undefined,
+      'once',
+    );
+    return;
+  }
   const window = h.window;
   const { menu, tray } = trayController;
   const original = preferences.productivitySettings().closeAction;
@@ -53,6 +62,28 @@ export async function trayChecks({ h, app, preferences, trayController }) {
     app.emit('second-instance', {}, [], '');
     await h.until(() => window.isVisible(), '再次启动显示');
     await check('再次启动恢复隐藏窗口', () => window.isVisible());
+    if (process.platform === 'linux') {
+      const item = (id) => trayController.nativeMenu.getMenuItemById(id);
+      await check(
+        'Linux 使用原生菜单提供打开和退出',
+        () => item('show')?.enabled && item('quit')?.enabled,
+      );
+      window.hide();
+      item('show').click();
+      await h.until(() => window.isVisible(), 'Linux 原生托盘菜单显示窗口');
+      await check('Linux 原生托盘菜单可恢复窗口', () => window.isVisible());
+      try {
+        trayController.generation({ jobs: [{ state: 'generating', index: 1, count: 3 }] });
+        await check('Linux 原生托盘菜单显示生成进度', () =>
+          trayController.nativeMenu.items.some(
+            (entry) => entry.label === '正在生成 1/3' && !entry.enabled,
+          ),
+        );
+      } finally {
+        trayController.generation({ jobs: [] });
+      }
+      return;
+    }
     window.minimize();
     tray.emit('click');
     await h.until(() => !window.isMinimized(), '托盘还原最小化窗口');

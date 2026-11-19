@@ -370,7 +370,7 @@ export function openPreferences(dataDirectory, safeStorage, options = {}) {
       assertSecretAccess();
       if (!safeStorage.isEncryptionAvailable()) {
         sessionApiKey = apiKey.trim();
-        delete preferences.aiApiKeyEncrypted;
+        if (platform !== 'linux') delete preferences.aiApiKeyEncrypted;
       } else {
         preferences.aiApiKeyEncrypted = safeStorage.encryptString(apiKey.trim()).toString('base64');
         secretCache.delete('aiApiKeyEncrypted');

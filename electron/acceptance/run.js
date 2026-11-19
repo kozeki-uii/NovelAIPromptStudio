@@ -35,6 +35,7 @@ import { cardCacheChecks } from './cardCache.js';
 import { agentChecks } from './agent.js';
 import { generationChecks } from './generation.js';
 import { secretStoreChecks } from './secretStore.js';
+import { systemSecretStore } from '../systemSecretStore.js';
 import { inpaintChecks } from './inpaint.js';
 import { outpaintChecks } from './outpaint.js';
 import { imageOperationChecks } from './imageOperations.js';
@@ -317,7 +318,7 @@ export async function runAcceptance(context) {
       files,
       overlays,
       snapshot,
-      encrypted: safeStorage.isEncryptionAvailable(),
+      encrypted: systemSecretStore(safeStorage).isEncryptionAvailable(),
     };
     const fontChecks = async () => {
       await font('.tb nav button', 'MiSans');
@@ -420,6 +421,7 @@ export async function runAcceptance(context) {
     if (mode.category === '首次引导' && !mode.packaged) {
       await onboardingChecks(environment);
     } else if (mode.packaged) {
+      if (process.platform === 'linux') await trayChecks(environment);
       await clientChecks(environment);
       await agentChecks(environment);
       h.category('安装包');
